@@ -1,0 +1,41 @@
+baseURL: 'https://bmitch.net/'
+title: 'Brandon Mitchell'
+theme: "PaperMod"
+languageCode: 'en-us'
+defaultContentLanguage: 'en-us'
+
+# Required if you want to render robots.txt template
+enableRobotsTXT: true
+
+# provide a last modified time for posts
+# enableGitInfo: true
+
+minify:
+  disableXML: true
+  minifyOutput: true
+
+# Needed for mermaid shortcodes
+markup:
+  highlight:
+    noClasses: false
+
+params:
+  author: "Brandon Mitchell"
+  info: "Open Source Developer"
+  description: "Open Source Developer, OCI Maintainer, Docker Captain, Cyclist, Backpacker, Sailor"
+  keywords: ["containers", "docker", "open container initiative", "OCI"]
+
+# Menu links
+menu:
+  main:
+    - identifier: categories
+      name: categories
+      url: /categories/
+      weight: 10
+    - identifier: tags
+      name: tags
+      url: /tags/
+      weight: 20
+
+pagination:
+  pagerSize: 20
