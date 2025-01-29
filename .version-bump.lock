@@ -1,0 +1,4 @@
+{"name":"makefile-hugo","key":"https://github.com/gohugoio/hugo.git","version":"v0.142.0"}
+{"name":"makefile-markdown-lint","key":"docker.io/davidanson/markdownlint-cli2","version":"v0.17.2"}
+{"name":"netlify-hugo","key":"https://github.com/gohugoio/hugo.git","version":"0.142.0"}
+{"name":"netlify-node","key":"https://github.com/nodejs/node.git","version":"23"}
