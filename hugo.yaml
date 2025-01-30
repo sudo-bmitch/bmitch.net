@@ -24,6 +24,7 @@ params:
   info: "Open Source Developer"
   description: "Open Source Developer, OCI Maintainer, Docker Captain, Cyclist, Backpacker, Sailor"
   keywords: ["containers", "docker", "open container initiative", "OCI"]
+  mastodonVerify: "https://fosstodon.org/@bmitch"
 
 # Menu links
 menu:

@@ -17,6 +17,3 @@ Quick links:
 - [GitHub](https://github.com/sudo-bmitch/)
 - [Mastodon](https://fosstodon.org/@bmitch)
 - [LinkedIn](https://www.linkedin.com/in/brandonhmitchell/)
-
-<!-- the following verifies my mastodon link and should not show on the page -->
-<a rel="me" href="https://fosstodon.org/@bmitch"></a>
