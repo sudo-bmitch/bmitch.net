@@ -1,14 +1,17 @@
 ---
 title: Brandon Mitchell
+layout: single
 ---
 
 ```console
 $ whoami
 Brandon Mitchell
-- Open source developer, mostly in Go
-- Open Container Initiative (OCI) maintainer
-- Docker Captain
-- Cyclist, backpacker, and sailor for fun
+- Position: Open source developer / semi-retired
+- Languages: Go, yaml, shell
+- Author: regclient, olareg, and many more
+- Maintainer: Open Container Initiative (OCI)
+- Organizations: Docker Captain
+- Hobbies: Cycling, sailing, backpacking
 ```
 
 Quick links:

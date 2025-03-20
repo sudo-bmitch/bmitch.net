@@ -29,14 +29,18 @@ params:
 # Menu links
 menu:
   main:
-    - identifier: categories
-      name: categories
-      url: /categories/
+    - identifier: blog
+      name: blog
+      url: /blog/
       weight: 10
+    # - identifier: categories
+    #   name: categories
+    #   url: /categories/
+    #   weight: 20
     - identifier: tags
       name: tags
       url: /tags/
-      weight: 20
+      weight: 30
 
 pagination:
   pagerSize: 20
