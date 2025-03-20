@@ -32,6 +32,10 @@ public: ## Build public site
 serve: ## Run development site
 	$(HUGO) serve -D
 
+.PHONY: preview-build
+preview-build: ## Netlify specific preview build
+	$(HUGO) build --baseURL "$(DEPLOY_PRIME_URL)" --buildDrafts --buildFuture
+
 .PHONY: theme
 theme: ## Refresh submodules, including themes
 	git submodule update --init --recursive
