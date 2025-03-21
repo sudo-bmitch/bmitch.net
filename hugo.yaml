@@ -8,7 +8,7 @@ defaultContentLanguage: 'en-us'
 enableRobotsTXT: true
 
 # provide a last modified time for posts
-# enableGitInfo: true
+enableGitInfo: true
 
 minify:
   disableXML: true
