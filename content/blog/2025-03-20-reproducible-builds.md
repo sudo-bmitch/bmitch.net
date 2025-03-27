@@ -5,7 +5,7 @@ title: 'Reproducible Builds'
 showToc: false
 TocOpen: false
 categories: ["blog"]
-tags: ["security", "reproducible-builds"]
+tags: ["security", "reproducible builds"]
 ---
 
 Reproducible builds are an idealistic solution to many supply chain security challenges I see today.
