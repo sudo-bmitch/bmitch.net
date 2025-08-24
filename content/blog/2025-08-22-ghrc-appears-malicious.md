@@ -10,49 +10,17 @@ tags: ["security", "OCI"]
 
 A simple typo of ghcr.io to ghrc.io would normally be a small goof.
 You'd typically get a 404 or similar error, finally work out the issue, fix it, and move along.
-But in this case, that typo appears to be doing something very malicious, stealing your credentials.
+But in this case, that typo appears to be doing something very malicious, stealing GitHub credentials.
 
 ## What's ghcr.io?
 
 First, a quick bit of background.
 `ghcr.io` is an OCI conformant registry for container images and OCI artifacts used by a lot of projects.
-When tools are configured to access it, they often do so with credentials to access private content or to push content.
-And that happens using the OCI APIs and the [token auth workflow][distribution-token-auth] currently defined by the distribution project.
+It's part of GitHub and is a very popular image and artifact repository used by open source projects.
 
-When querying `ghcr.io` you can see the start of this with the `www-authenticate` header:
+## ghrc.io Is Just a Default Nginx
 
-```shell
-$ curl -i https://ghcr.io/v2/
-HTTP/2 401
-content-type: application/json
-docker-distribution-api-version: registry/2.0
-strict-transport-security: max-age=63072000; includeSubDomains; preload
-www-authenticate: Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="repository:user/image:pull"
-date: Fri, 22 Aug 2025 17:51:36 GMT
-content-length: 73
-x-github-request-id: DA46:5B047:5EDB5D:66E5C2:68A8AE28
-
-{"errors":[{"code":"UNAUTHORIZED","message":"authentication required"}]}
-```
-
-## But It's Just A Typo, Right?
-
-Now when running the same call to `ghrc.io`, we see something very concerning:
-
-```shell
-$ curl -i https://ghrc.io/v2/
-HTTP/2 401
-server: nginx
-date: Fri, 22 Aug 2025 17:56:36 GMT
-content-type: application/json
-content-length: 72
-www-authenticate: Bearer realm="https://ghrc.io/token"
-
-{"errors":[{"code":"UNAUTHORIZED","message":"authentication required"}]}
-```
-
-First, the server is a simple nginx install, not a container registry, none of these fields are from someone actually running a registry server.
-Second, it's only the OCI `/v2/` endpoint that is returning this, the rest look like a default nginx setup with the default home page and 404s on the other URLs:
+At first glance, `ghrc.io` is just a default nginx install:
 
 ```shell
 $ curl -i https://ghrc.io/
@@ -91,6 +59,8 @@ Commercial support is available at
 </html>
 ```
 
+Even checking other links gives a typical 404 error:
+
 ```shell
 $ curl -i https://ghrc.io/404/
 HTTP/2 404
@@ -109,31 +79,17 @@ strict-transport-security: max-age=31536000; includeSubDomains
 </html>
 ```
 
-```shell
-$ curl -i https://ghrc.io/v3/
-HTTP/2 404
-server: nginx
-date: Fri, 22 Aug 2025 17:58:35 GMT
-content-type: text/html
-content-length: 146
-strict-transport-security: max-age=31536000; includeSubDomains
+## Why Is It Malicious?
 
-<html>
-<head><title>404 Not Found</title></head>
-<body>
-<center><h1>404 Not Found</h1></center>
-<hr><center>nginx</center>
-</body>
-</html>
-```
-
-But the `/v2/` API's return just enough of the normal OCI response:
+The concerning part comes in when looking at the OCI API's.
+Those are all under the `/v2/` prefix for legacy reasons.
+Looking at `ghrc.io`, suddenly it's not acting like a default nginx install anymore:
 
 ```shell
-$ curl -i https://ghrc.io/v2/library/alpine/tags/list
+$ curl -i https://ghrc.io/v2/
 HTTP/2 401
 server: nginx
-date: Fri, 22 Aug 2025 17:58:21 GMT
+date: Fri, 22 Aug 2025 17:56:36 GMT
 content-type: application/json
 content-length: 72
 www-authenticate: Bearer realm="https://ghrc.io/token"
@@ -141,12 +97,72 @@ www-authenticate: Bearer realm="https://ghrc.io/token"
 {"errors":[{"code":"UNAUTHORIZED","message":"authentication required"}]}
 ```
 
-Both the error message body, and the `www-authenticate` header, show this is a targeted attack to OCI clients to trigger them to send their credentials to the token API.
+Compare that to some other registries and you'll see the 401 status, `www-authenticate` header, and error message look very similar:
+
+```shell
+$ curl -i https://ghcr.io/v2/
+HTTP/2 401
+content-type: application/json
+docker-distribution-api-version: registry/2.0
+strict-transport-security: max-age=63072000; includeSubDomains; preload
+www-authenticate: Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="repository:user/image:pull"
+date: Fri, 22 Aug 2025 17:51:36 GMT
+content-length: 73
+x-github-request-id: DA46:5B047:5EDB5D:66E5C2:68A8AE28
+
+{"errors":[{"code":"UNAUTHORIZED","message":"authentication required"}]}
+```
+
+```shell
+$ curl -i https://registry-1.docker.io/v2/
+HTTP/2 401
+date: Sun, 24 Aug 2025 17:31:43 GMT
+content-type: application/json
+content-length: 87
+docker-distribution-api-version: registry/2.0
+www-authenticate: Bearer realm="https://auth.docker.io/token",service="registry.docker.io"
+strict-transport-security: max-age=31536000
+
+{"errors":[{"code":"UNAUTHORIZED","message":"authentication required","detail":null}]}
+```
+
+```shell
+$ curl -i https://quay.io/v2/
+HTTP/2 401
+date: Sun, 24 Aug 2025 17:32:18 GMT
+content-type: text/html; charset=utf-8
+content-length: 4
+server: nginx/1.22.1
+www-authenticate: Bearer realm="https://quay.io/v2/auth",service="quay.io"
+docker-distribution-api-version: registry/2.0
+
+true
+```
+
+The (optional) error message is defined by the [OCI Distribution Spec][distribution-spec] along with the various OCI APIs under the `/v2/` prefix.
+Authentication hasn't been standardized by OCI, yet, but projects all use the [token auth workflow][distribution-token-auth] currently defined by the distribution project.
+
+**The important detail is this `www-authenticate` header is telling OCI clients, like Docker, containerd, podman, and the various CRI's used by Kubernetes, to send their user credentials to that `https://ghrc.io/token` API.**
+There is no legitimate reason to configure this header on a default nginx install, and other parts of the server indicate that this is not a container registry.
 
 ## What's the Risk?
 
-If you have ever run `docker login ghrc.io` or configured any automation like GitHub actions to login to `ghrc.io` instead of `ghcr.io`, you have leaked your credentials.
-Just trying to pull an image won't leak your credentials, because credentials are tied to the hostname, and container runtimes will try to perform an anonymous image pull and fail.
-If you've ever accidentally performed the login to the wrong server, you should change your password, and/or revoke any PATs you used.
+All signs point to this being a credential stealing typo-squatting attack.
+Credentials would be stolen only if you stored credentials for the `ghrc.io` registry, because clients won't send credentials for a different host to `ghcr.io`.
 
+Some scenarios that would result in credentials being leaked include:
+
+- Running `docker login ghrc.io`.
+- A GitHub action with `uses: docker/login-action` and with `registry: ghrc.io`.
+- Creating a Kubernetes secret with registry credentials for `ghrc.io` and then trying to pull an image from that typoed host.
+
+Simply trying to push or pull an image to this registry without logging in will not leak credentials and will not leak any data other than your repository name.
+These commands default to trying to acquire an anonymous token, which will quickly fail.
+
+## What Should You Do?
+
+If you've ever accidentally performed the login to the wrong server, you should change your password, revoke any PATs you used, and look for any potentially malicious activity in your GitHub account.
+An attacker could use it to push malicious images to your `ghcr.io` repositories, or they may gain access to your GitHub account directly depending on what login credentials were used.
+
+[distribution-spec]: https://github.com/opencontainers/distribution-spec/
 [distribution-token-auth]: https://distribution.github.io/distribution/spec/auth/token/
